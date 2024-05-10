@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 csscolorparser = "0.6.2"
+thiserror = "1.0.60"
 xml-rs = "0.8.20"
