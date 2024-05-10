@@ -1,0 +1,157 @@
+name: Release
+
+on:
+  release:
+    types:
+      - created
+  workflow_dispatch:
+
+jobs:
+  build-release:
+    permissions:
+      contents: write
+    name: build-release
+    runs-on: ${{ matrix.os }}
+    env:
+      RUST_BACKTRACE: 1
+    strategy:
+      fail-fast: false
+      matrix:
+        build:
+          - linux musl x64
+          - linux musl aarch64
+          - macos x64
+          - macos aarch64
+          - pc windows msvc x64
+        include:
+          - build: linux musl x64
+            os: ubuntu-latest
+            rust: stable
+            target: x86_64-unknown-linux-musl
+            cargo: cargo
+          - build: linux musl aarch64
+            os: ubuntu-latest
+            rust: stable
+            target: aarch64-unknown-linux-musl
+            cargo: cross
+          - build: macos x64
+            os: macos-latest
+            rust: stable
+            target: x86_64-apple-darwin
+            cargo: cargo
+          - build: macos aarch64
+            os: macos-latest
+            rust: stable
+            target: aarch64-apple-darwin
+            cargo: cargo
+          - build: pc windows msvc x64
+            os: windows-latest
+            rust: stable
+            target: x86_64-pc-windows-msvc
+            cargo: cargo
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+          targets: ${{ matrix.target }}
+
+      - name: Use Cross
+        if: matrix.cargo == 'cross'
+        shell: bash
+        run: |
+          # In the past, new releases of 'cross' have broken CI. So for now, we
+          # pin it. We also use their pre-compiled binary releases because cross
+          # has over 100 dependencies and takes a bit to compile.
+          dir="$RUNNER_TEMP/cross-download"
+          mkdir "$dir"
+          echo "$dir" >> $GITHUB_PATH
+          cd "$dir"
+          curl -LO "https://github.com/cross-rs/cross/releases/download/v0.2.5/cross-x86_64-unknown-linux-musl.tar.gz"
+          tar xf cross-x86_64-unknown-linux-musl.tar.gz
+
+      - name: Install musl-tools
+        shell: bash
+        if: matrix.os == 'ubuntu-latest'
+        run: sudo apt-get install -y --no-install-recommends musl-tools
+        
+      # Workaround for <https://github.com/actions/virtual-environments/issues/2557>
+      - name: Switch Xcode SDK
+        shell: bash
+        if: runner.os == 'macos'
+        run: |
+          cat <<EOF >> "$GITHUB_ENV"
+          SDKROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk
+          EOF
+
+      - name: Build release binary
+        shell: bash
+        run: |
+          ${{ matrix.cargo }} build --verbose --release --target ${{ matrix.target }}
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            filename="obs-countdown.exe"
+          else
+            filename="obs-countdown"
+          fi
+          bin="./target/${{ matrix.target }}/release/$filename"
+          echo "BUILD_DIR=./target/${{ matrix.target }}/release" >> $GITHUB_ENV
+          echo "BIN=$bin" >> $GITHUB_ENV
+          echo "FILENAME=$filename" >> $GITHUB_ENV
+
+      - name: List build artifacts
+        run: ls -R ${{ env.BUILD_DIR }}
+
+      - name: Create checksum
+        shell: bash
+        id: make-checksum
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          name="obs-countdown-${{ matrix.target }}.sha256sum"
+          if [[ "$RUNNER_OS" != "macOS" ]]; then
+            sha256sum "${{ env.FILENAME }}" > "${name}"
+          else
+            shasum -a 256 "${{ env.FILENAME }}" > "${name}"
+          fi
+          asset_sha_path="${{ env.BUILD_DIR }}/${name}"
+          echo "ASSET_SHA_PATH=$asset_sha_path" >> $GITHUB_ENV
+
+      - name: Tar release
+        shell: bash
+        id: make-artifact
+        working-directory: ${{ env.BUILD_DIR }}
+        run: |
+          name="obs-countdown-${{ matrix.target }}.tgz"
+          tar cvzf "${name}" ${{ env.FILENAME }}
+          asset_path="${{ env.BUILD_DIR }}/${name}"
+          echo "ASSET_PATH=$asset_path" >> $GITHUB_ENV
+
+      - name: Prints assets paths
+        run: |
+          ls ${{ env.ASSET_PATH }}
+          ls ${{ env.ASSET_SHA_PATH }}
+
+      - name: Upload release archive
+        uses: softprops/action-gh-release@v1
+        if: github.event_name == 'release'
+        with:
+          files: ${{ env.ASSET_PATH }}
+
+      - name: Upload checksum
+        uses: softprops/action-gh-release@v1
+        if: github.event_name == 'release'
+        with:
+          files: ${{ env.ASSET_SHA_PATH }}
+
+  release-on-crates-io:
+    needs:
+        - build-release
+    runs-on: ubuntu-latest
+    steps:
+        - uses: actions/checkout@v4
+        - name: Release on Crates.io
+          run: |
+              cargo login ${{ secrets.CARGO_TOKEN }}
+              cargo publish
