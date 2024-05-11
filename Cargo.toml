@@ -2,6 +2,13 @@
 name = "svg-invert"
 version = "0.0.1"
 edition = "2021"
+authors = ["Luciano Mammino"]
+description = "A CLI utility and a library to invert colors in an SVG image"
+repository = "https://github.com/lmammino/svg-invert"
+keywords = ["svg", "invert", "colors", "cli", "utility", "library", "image"]
+categories = ["command-line-utilities"]
+license = "MIT"
+readme = "README.md"
 
 [dependencies]
 csscolorparser = "0.6.2"
