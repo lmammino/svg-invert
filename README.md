@@ -3,6 +3,7 @@
 [![Build Status](https://github.com/lmammino/svg-invert/actions/workflows/rust.yml/badge.svg)](https://github.com/lmammino/svg-invert/actions/workflows/rust.yml)
 [![codecov](https://codecov.io/gh/lmammino/svg-invert/graph/badge.svg?token=2a5OOr6Um4)](https://codecov.io/gh/lmammino/svg-invert)
 [![Crates.io](https://img.shields.io/crates/v/svg-invert.svg)](https://crates.io/crates/svg-invert)
+[![Documentation](https://docs.rs/svg-invert/badge.svg)](https://docs.rs/svg-invert)
 
 A CLI utility that inverts colors in an SVG file.
 
