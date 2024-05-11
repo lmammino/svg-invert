@@ -66,6 +66,16 @@ After running the command, this will be the content of `inverted-some-lovely.svg
 
 ## Usage as a library
 
+You can use this utility also as part of you own Rust program by using it as a library.
+
+You can install the library with:
+
+```bash
+cargo add svg-invert
+```
+
+Then you can use it in your Rust program like this:
+
 ```rust
 use std::io::{stdin, stdout, BufReader, BufWriter, Write};
 use svg_invert::invert_svg;
