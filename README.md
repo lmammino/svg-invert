@@ -44,10 +44,14 @@ cargo install svg-invert
 Right now, `svg-invert` offers only a very simple and minimal interface: data in from stdin and data out to stdout:
 
 ```bash
-cat some-lovely.svg | svg-invert > inverted-some-lovely.svg
+svg-invert < some-lovely.svg > inverted-some-lovely.svg
 ```
 
-Linux pipes FTW! 🚀
+or, if you like Unix pipes:
+
+```bash
+cat some-lovely.svg | svg-invert > inverted-some-lovely.svg
+```
 
 For example, if this is the content of `some-lovely.svg`:
 
