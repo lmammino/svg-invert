@@ -64,6 +64,46 @@ After running the command, this will be the content of `inverted-some-lovely.svg
 > [!NOTE]
 > If think this little crab is cute, you should check out my book [Crafting Lambda Functions in Rust](https://rust-lambda.com) where you can learn how to build serverless applications with Rust and AWS Lambda! 🦀🚀 Fun fact: This utility was actually born as a way to create SVGs diagrams that look good on both the light and dark version of the e-book!
 
+## Usage as a library
+
+```rust
+use std::io::{stdin, stdout, BufReader, BufWriter, Write};
+use svg_invert::invert_svg;
+
+let reader = BufReader::new(stdin());
+let writer = BufWriter::new(stdout());
+match invert_svg(reader, writer) {
+  Ok(_) => {
+    // makes sure to flush stdout before exiting
+    // since we are using a BufWriter
+    match stdout().flush() {
+      Ok(_) => {}
+      Err(e) => {
+        eprintln!("Error: {e}");
+      }
+    }
+  }
+  Err(e) => {
+    eprintln!("Error: {e}");
+  }
+}
+```
+
+## Processing multiple images
+
+[svg_invert::invert_svg](fn.invert_svg.html) is a shortcut for creating a new [InvertSvg](struct.InvertSvg.html) instance and calling its [invert_svg](struct.InvertSvg.html#method.invert_svg) method.
+
+If you intend to process multiple SVG images in the same program, it might be beneficial to create a single [InvertSvg](struct.InvertSvg.html) instance and reuse it.
+
+In fact, an [InvertSvg](struct.InvertSvg.html) instance holds an internal cache that stores the inverted colors of the SVG images it processes.
+So, by reusing the same instance, you might have some performance gains if your images happen to share the same colors.
+
+```rust
+use svg_invert::InvertSvg;
+
+let invert_svg = InvertSvg::new();
+// call invert_svg.invert_svg(...) multiple times
+```
 
 ## 👷 Contributing
 
