@@ -92,9 +92,9 @@ jobs:
         run: |
           ${{ matrix.cargo }} build --verbose --release --target ${{ matrix.target }}
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            filename="obs-countdown.exe"
+            filename="svg-invert.exe"
           else
-            filename="obs-countdown"
+            filename="svg-invert"
           fi
           bin="./target/${{ matrix.target }}/release/$filename"
           echo "BUILD_DIR=./target/${{ matrix.target }}/release" >> $GITHUB_ENV
@@ -109,7 +109,7 @@ jobs:
         id: make-checksum
         working-directory: ${{ env.BUILD_DIR }}
         run: |
-          name="obs-countdown-${{ matrix.target }}.sha256sum"
+          name="svg-invert-${{ matrix.target }}.sha256sum"
           if [[ "$RUNNER_OS" != "macOS" ]]; then
             sha256sum "${{ env.FILENAME }}" > "${name}"
           else
@@ -123,7 +123,7 @@ jobs:
         id: make-artifact
         working-directory: ${{ env.BUILD_DIR }}
         run: |
-          name="obs-countdown-${{ matrix.target }}.tgz"
+          name="svg-invert-${{ matrix.target }}.tgz"
           tar cvzf "${name}" ${{ env.FILENAME }}
           asset_path="${{ env.BUILD_DIR }}/${name}"
           echo "ASSET_PATH=$asset_path" >> $GITHUB_ENV
