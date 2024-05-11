@@ -124,3 +124,20 @@ pub fn invert_svg<R: Read, W: Write>(reader: R, writer: W) -> Result<(), InvertS
 
     Ok(())
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn it_inverts_a_sample_svg() {
+        let input = include_str!("../examples/some-lovely.svg");
+        let expected_output = include_str!("../examples/inverted-some-lovely.svg");
+
+        let mut output: Vec<u8> = Vec::new();
+        invert_svg(input.as_bytes(), &mut output).unwrap();
+        let output = String::from_utf8(output).unwrap();
+
+        assert_eq!(output, expected_output);
+    }
+}
